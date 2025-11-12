@@ -38,34 +38,36 @@ function TodoForm({ open, onClose, onSubmit, initialData = null }) {
   }, [open, initialData]);
 
   const handleSubmit = () => {
+    if (!text.trim()) {
+      alert('Please enter TODO text');
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('text', text);
+    formData.append('text', text.trim());
     if (dueDate) formData.append('dueDate', dueDate.toISOString());
     formData.append('completed', completed);
     if (image) formData.append('image', image);
     if (pdf) formData.append('pdf', pdf);
 
     onSubmit(formData);
-  };
-
-  const handleClose = () => {
-    onClose();
-    setText(''); setDueDate(null); setCompleted(false); setImage(null); setPdf(null);
+    onClose(); // Close modal after submit
   };
 
   return (
-    <Modal open={open} onClose={handleClose}>
+    <Modal open={open} onClose={onClose}>
       <Box sx={style}>
-        <IconButton onClick={handleClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
+        <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8 }}>
           <CloseIcon />
         </IconButton>
         <DialogContent>
           <TextField
             fullWidth
-            label="TODO Text"
+            label="TODO Text *"
             value={text}
             onChange={(e) => setText(e.target.value)}
             sx={{ mb: 2 }}
+            required
           />
           <DateTimePicker
             label="Due Date"
@@ -82,7 +84,7 @@ function TodoForm({ open, onClose, onSubmit, initialData = null }) {
             type="file"
             fullWidth
             accept="image/*"
-            onChange={(e) => setImage(e.target.files[0])}
+            onChange={(e) => setImage(e.target.files[0] || null)}
             InputProps={{ startAdornment: <InputAdornment position="start"><AddAPhoto /></InputAdornment> }}
             sx={{ mb: 2 }}
           />
@@ -95,7 +97,7 @@ function TodoForm({ open, onClose, onSubmit, initialData = null }) {
             type="file"
             fullWidth
             accept=".pdf"
-            onChange={(e) => setPdf(e.target.files[0])}
+            onChange={(e) => setPdf(e.target.files[0] || null)}
             InputProps={{ startAdornment: <InputAdornment position="start"><PictureAsPdf /></InputAdornment> }}
             sx={{ mb: 2 }}
           />
@@ -106,8 +108,8 @@ function TodoForm({ open, onClose, onSubmit, initialData = null }) {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
+          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={!text.trim()}>
             {initialData ? 'Update' : 'Add'} TODO
           </Button>
         </DialogActions>
