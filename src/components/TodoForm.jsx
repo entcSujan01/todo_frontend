@@ -37,21 +37,49 @@ function TodoForm({ open, onClose, onSubmit, initialData = null }) {
     }
   }, [open, initialData]);
 
-  const handleSubmit = () => {
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]); // Remove data:image/...;base64,
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleSubmit = async () => {
     if (!text.trim()) {
       alert('Please enter TODO text');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('text', text.trim());
-    if (dueDate) formData.append('dueDate', dueDate.toISOString());
-    formData.append('completed', completed);
-    if (image) formData.append('image', image);
-    if (pdf) formData.append('pdf', pdf);
+    const payload = {
+      text: text.trim(),
+      dueDate: dueDate ? dueDate.toISOString() : null,
+      completed,
+    };
 
-    onSubmit(formData);
-    onClose(); // Close modal after submit
+    if (image) {
+      try {
+        payload.imageBase64 = await fileToBase64(image);
+        payload.imageName = image.name;
+      } catch (err) {
+        alert('Image upload failed');
+        return;
+      }
+    }
+
+    if (pdf) {
+      try {
+        payload.pdfBase64 = await fileToBase64(pdf);
+        payload.pdfName = pdf.name;
+      } catch (err) {
+        alert('PDF upload failed');
+        return;
+      }
+    }
+
+    onSubmit(payload);
+    onClose();
   };
 
   return (
